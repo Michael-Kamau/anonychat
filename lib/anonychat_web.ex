@@ -43,6 +43,7 @@ defmodule AnonychatWeb do
       use Gettext, backend: AnonychatWeb.Gettext
 
       import Plug.Conn
+      import Inertia.Controller
 
       unquote(verified_routes())
     end
@@ -90,6 +91,9 @@ defmodule AnonychatWeb do
       # Common modules used in templates
       alias Phoenix.LiveView.JS
       alias AnonychatWeb.Layouts
+
+      import Inertia.HTML
+
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())

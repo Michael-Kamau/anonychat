@@ -25,8 +25,10 @@ config :anonychat, AnonychatWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "RHm0TZzaqRcLRXDUs92AtSarNxUbXtNJQcajdyjw/ZuVoJqmlyuLFos5BPFCP1QW",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:anonychat, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:anonychat, ~w(--watch)]}
+    # esbuild: {Esbuild, :install_and_run, [:anonychat, ~w(--sourcemap=inline --watch)]},
+    tailwind: {Tailwind, :install_and_run, [:anonychat, ~w(--watch)]},
+    npm: ["run", "dev", cd: Path.expand("../assets", __DIR__)]
+
   ]
 
 # ## SSL Support
