@@ -1,15 +1,17 @@
 {
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build --watch --minify false --emptyOutDir false --clearScreen false --mode development"
   },
   "dependencies": {
     "@inertiajs/progress": "^0.2.7",
     "@inertiajs/vue3": "^2.2.6",
+    "@tailwindcss/vite": "^4.1.14",
     "axios": "^1.12.2",
     "phoenix": "^1.8.1",
     "phoenix_html": "^4.3.0",
     "phoenix_live_view": "^1.1.13",
+    "tailwindcss": "^4.1.14",
     "vue": "^3.5.22"
   },
   "devDependencies": {

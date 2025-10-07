@@ -1,8 +1,10 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import tailwindcss from '@tailwindcss/vite';
+
 
 export default defineConfig(({ mode }) => ({
-  plugins: [vue()],   // 👈 This line enables .vue SFC support
+  plugins: [vue(), tailwindcss()],   
   root: ".",
   base: mode === "development" ? "/" : "/assets/",
   server: {

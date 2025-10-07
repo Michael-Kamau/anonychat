@@ -20,10 +20,7 @@ config :anonychat, AnonychatWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Anonychat.PubSub,
-  live_view: [signing_salt: "9UgsbEtT"],
-  watchers: [
-    npm: ["run", "dev", cd: Path.expand("../assets", __DIR__)]
-  ]
+  live_view: [signing_salt: "9UgsbEtT"]
 
 # Configures the mailer
 #
