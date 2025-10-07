@@ -5,13 +5,13 @@
     <.inertia_head content={assigns[:inertia_head]} />
     <!-- Remove old app.css/app.js lines while on Vite -->
     <%= if Mix.env() == :dev do %>
-      <script type="module" src="http://localhost:5173/@vite/client"></script>
-      <script type="module" src="http://localhost:5173/js/app.js"></script>
-    <% else %>
+  <script type="module" src="http://localhost:5173/@vite/client"></script>
+  <script type="module" src="http://localhost:5173/js/app.js"></script>
+<% else %>
       <!-- In prod: just load your compiled assets -->
       <link rel="stylesheet" href={~p"/assets/app.css"} />
       <script type="module" src={~p"/assets/app.js"}></script>
-    <% end %>
+<% end %>
   </head>
   <body><%= @inner_content %></body>
 </html>

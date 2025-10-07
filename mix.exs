@@ -87,6 +87,7 @@ defmodule Anonychat.MixProject do
       "assets.deploy": [
         "tailwind anonychat --minify",
         "esbuild anonychat --minify",
+        "cmd --cd assets node node_modules/vite/bin/vite.js build",
         "phx.digest"
       ],
       precommit: ["compile --warning-as-errors", "deps.unlock --unused", "format", "test"]
