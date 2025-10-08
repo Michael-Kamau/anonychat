@@ -24,9 +24,16 @@ config :anonychat, AnonychatWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "RHm0TZzaqRcLRXDUs92AtSarNxUbXtNJQcajdyjw/ZuVoJqmlyuLFos5BPFCP1QW",
+  # watchers: [
+  #   # esbuild: {Esbuild, :install_and_run, [:anonychat, ~w(--sourcemap=inline --watch)]},
+  #   # tailwind: {Tailwind, :install_and_run, [:anonychat, ~w(--watch)]},
+  #   node: ["vite", "build", "--mode", "development", "--watch", "--config", "vite.config.js", cd: Path.expand("../assets", __DIR__)],
+
+  # ]
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:anonychat, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:anonychat, ~w(--watch)]}
+    tailwind: {Tailwind, :install_and_run, [:anonychat, ~w(--watch)]},
+     node: ["node_modules/vite/bin/vite.js", cd: Path.expand("../assets", __DIR__)]
   ]
 
 # ## SSL Support
