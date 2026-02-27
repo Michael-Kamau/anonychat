@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  anonychat-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: anonychat-dev
+    environment:
+      MIX_ENV: dev
+      PHX_SERVER: "true"
+      DB_HOST: db
+      DATABASE_URL: "ecto://postgres:postgres@db:5437/anonychat_dev"
+      # SECRET_KEY_BASE is needed even in dev on Phoenix 1.8 – generate once and reuse
+      SECRET_KEY_BASE: "bmRCNUCmSLpJJSZl+vSydbgNqFm6TbYfmLQ9B3wVtnsUiNMIx2T5+VBFW93pk9HC"
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - deps:/app/deps
+      - _build:/app/_build
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    container_name: anonychat-dev-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: anonychat_dev
+    ports:
+      - "5437:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  deps:
+  _build:
+  db_data:
