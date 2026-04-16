@@ -25,8 +25,6 @@ data:
   MIX_ENV: "prod"
   PHX_SERVER: "true"
   PHX_HOST: "localhost"
-
-
   # Mailhog – configure Swoosh in runtime.exs to use these
   SMTP_HOST: "mailhog"
   SMTP_PORT: "1025"
@@ -51,6 +49,18 @@ spec:
       labels:
         app: anonychat
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - >
+              until pg_isready -h anonychat-postgres -p 5432 -U postgres -d anonychat_prod;
+              do
+                echo "waiting for postgres";
+                sleep 2;
+              done
       containers:
         - name: anonychat
           image: mkaritu/anonychat:v4
@@ -67,19 +77,24 @@ spec:
             # uncomment and adjust runtime.exs accordingly.
             # - name: DB_HOST
             #   value: "anonychat-postgres"
-          # readinessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: 4000
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 10
-
-          # livenessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: 4000
-          #   initialDelaySeconds: 30
-          #   periodSeconds: 20
+          startupProbe:
+            httpGet:
+              path: /
+              port: 4000
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 20
 
           resources:
             requests:
@@ -157,7 +172,23 @@ spec:
             - name: POSTGRES_DB
               value: "anonychat_prod"
             - name: POSTGRES_HOST_AUTH_METHOD
-              value: "md5" 
+              value: "md5"
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d anonychat_prod
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d anonychat_prod
+            initialDelaySeconds: 15
+            periodSeconds: 10
           volumeMounts:
             - name: pgdata
               mountPath: /var/lib/postgresql/data
@@ -190,7 +221,6 @@ spec:
     - name: postgres
       port: 5432
       targetPort: 5432
-  clusterIP: None  # optional (headless). Remove this line if you prefer normal ClusterIP.
 
 ---
 # =========================
