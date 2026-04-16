@@ -1,7 +1,8 @@
 {
   "scripts": {
     "dev": "vite",
-    "build": "vite build --watch --minify false --emptyOutDir false --clearScreen false --mode development"
+    "build": "vite build --mode build",
+    "build:dev": "vite build --watch --minify false --emptyOutDir false --clearScreen false --mode development"
   },
   "dependencies": {
     "@inertiajs/progress": "^0.2.7",

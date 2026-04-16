@@ -1,0 +1,279 @@
+# =========================
+# Secret: app credentials
+# =========================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: anonychat-secret
+type: Opaque
+stringData:
+  # Generate with: mix phx.gen.secret
+  SECRET_KEY_BASE: "bmRCNUCmSLpJJSZl+vSydbgNqFm6TbYfmLQ9B3wVtnsUiNMIx2T5+VBFW93pk9HC"
+  # Match Postgres user/pass/db + service name below
+  DATABASE_URL: "ecto://postgres:postgres@anonychat-postgres:5432/anonychat_prod"
+
+---
+# =========================
+# ConfigMap: non-secret env
+# =========================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anonychat-config
+data:
+  PORT: "4000"
+  MIX_ENV: "prod"
+  PHX_SERVER: "true"
+  PHX_HOST: "localhost"
+  # Mailhog – configure Swoosh in runtime.exs to use these
+  SMTP_HOST: "mailhog"
+  SMTP_PORT: "1025"
+
+---
+# =========================
+# Deployment: Phoenix app
+# =========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anonychat
+  labels:
+    app: anonychat
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: anonychat
+  template:
+    metadata:
+      labels:
+        app: anonychat
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - >
+              until pg_isready -h anonychat-postgres -p 5432 -U postgres -d anonychat_prod;
+              do
+                echo "waiting for postgres";
+                sleep 2;
+              done
+      containers:
+        - name: anonychat
+          image: mkaritu/anonychat:v4
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: anonychat-config
+            - secretRef:
+                name: anonychat-secret
+          env:
+            # If you want separate env vars instead of DATABASE_URL
+            # uncomment and adjust runtime.exs accordingly.
+            # - name: DB_HOST
+            #   value: "anonychat-postgres"
+          startupProbe:
+            httpGet:
+              path: /
+              port: 4000
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+# =========================
+# Service: Phoenix app
+# =========================
+apiVersion: v1
+kind: Service
+metadata:
+  name: anonychat
+  labels:
+    app: anonychat
+spec:
+  selector:
+    app: anonychat
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4000
+  type: LoadBalancer # or NodePort/ClusterIP + Ingress, depending on your cluster
+
+---
+# =========================
+# PersistentVolumeClaim: Postgres data
+# =========================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: anonychat-postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # storageClassName: standard  # uncomment if you need a specific storage class
+
+---
+# =========================
+# Deployment: Postgres
+# =========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anonychat-postgres
+  labels:
+    app: anonychat-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anonychat-postgres
+  template:
+    metadata:
+      labels:
+        app: anonychat-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "anonychat_prod"
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: "md5"
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d anonychat_prod
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres -d anonychat_prod
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "256Mi"
+            limits:
+              cpu: "250m"
+              memory: "512Mi"
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: anonychat-postgres-pvc
+
+---
+# =========================
+# Service: Postgres
+# =========================
+apiVersion: v1
+kind: Service
+metadata:
+  name: anonychat-postgres
+  labels:
+    app: anonychat-postgres
+spec:
+  selector:
+    app: anonychat-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+
+---
+# =========================
+# Deployment: Mailhog
+# =========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailhog
+  labels:
+    app: mailhog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailhog
+  template:
+    metadata:
+      labels:
+        app: mailhog
+    spec:
+      containers:
+        - name: mailhog
+          image: mailhog/mailhog:latest
+          ports:
+            - containerPort: 1025  # SMTP
+            - containerPort: 8025  # Web UI
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "256Mi"
+
+---
+# =========================
+# Service: Mailhog
+# =========================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailhog
+  labels:
+    app: mailhog
+spec:
+  selector:
+    app: mailhog
+  ports:
+    - name: smtp
+      port: 1025
+      targetPort: 1025
+    - name: http
+      port: 8025
+      targetPort: 8025
+  type: ClusterIP

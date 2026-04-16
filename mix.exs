@@ -83,10 +83,29 @@ defmodule Anonychat.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["compile", "tailwind anonychat", "esbuild anonychat"],
+      # "assets.build": ["compile", "tailwind anonychat", "esbuild anonychat"],
+      # "assets.deploy": [
+      #   "tailwind anonychat --minify",
+      #   "esbuild anonychat --minify",
+      #   "cmd --cd assets node node_modules/vite/bin/vite.js build",
+      #   "phx.digest"
+      # ],
+      # For local non-prod builds
+      # "assets.build": [
+      #   "tailwind anonychat",
+      #   "cmd --cd assets npm run build:dev"
+      # ],
+      # DEV: optional – you can even leave this empty if Tailwind is handled by Vite
+      "assets.build": [
+        "compile",
+        "tailwind anonychat"
+        # no Vite build here; you will run `npm run dev` separately
+      ],
+
+      # For prod / Docker / k8s
       "assets.deploy": [
         "tailwind anonychat --minify",
-        "esbuild anonychat --minify",
+        "cmd --cd assets npm run build",
         "phx.digest"
       ],
       precommit: ["compile --warning-as-errors", "deps.unlock --unused", "format", "test"]

@@ -1,0 +1,16 @@
+# Elixir / Phoenix
+_build
+deps
+
+# Node
+assets/node_modules
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+.git
+.gitignore
+Dockerfile*
+.dockerignore
+tmp
