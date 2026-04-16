@@ -52,11 +52,36 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
+  url_scheme = System.get_env("PHX_SCHEME") || "https"
+
+  url_port =
+    case System.get_env("URL_PORT") do
+      nil ->
+        if url_scheme == "https", do: 443, else: 80
+
+      value ->
+        String.to_integer(value)
+    end
+
+  check_origin =
+    case System.get_env("CHECK_ORIGIN") do
+      nil ->
+        ["#{url_scheme}://#{host}:#{url_port}", "//#{host}:#{url_port}"]
+
+      "false" ->
+        false
+
+      origins ->
+        origins
+        |> String.split(",", trim: true)
+        |> Enum.map(&String.trim/1)
+    end
 
   config :anonychat, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :anonychat, AnonychatWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
+    url: [host: host, port: url_port, scheme: url_scheme],
+    check_origin: check_origin,
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
