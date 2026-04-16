@@ -16,7 +16,7 @@ defmodule AnonychatWeb.Endpoint do
     longpoll: [connect_info: [session: @session_options]]
 
   socket "/socket", AnonychatWeb.UserSocket,
-    websocket: [check_origin: {AnonychatWeb.SocketOrigin, :allowed?, []}],
+    websocket: true,
     longpoll: false
 
   # Serve at "/" the static files from "priv/static" directory.
