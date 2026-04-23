@@ -63,12 +63,19 @@ if config_env() == :prod do
         String.to_integer(value)
     end
 
-  check_origin = [
-    "#{public_scheme}://#{host}",
-    "#{public_scheme}://#{host}:#{public_port}",
-    "//#{host}",
-    "//#{host}:#{public_port}"
-  ]
+  check_origin =
+    ([
+       "//#{host}",
+       "//#{host}:#{public_port}"
+     ] ++
+       for scheme <- ["http", "https"] do
+         [
+           "#{scheme}://#{host}",
+           "#{scheme}://#{host}:#{public_port}"
+         ]
+       end)
+    |> List.flatten()
+    |> Enum.uniq()
 
   config :anonychat, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
