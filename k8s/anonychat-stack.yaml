@@ -21,10 +21,12 @@ kind: ConfigMap
 metadata:
   name: anonychat-config
 data:
-  PORT: "31314"
+  PORT: "4000"
   MIX_ENV: "prod"
   PHX_SERVER: "true"
   PHX_HOST: "rancher.mikazon.co.ke"
+  PHX_SCHEME: "http"
+  PHX_PORT: "31314"
   # Mailhog – configure Swoosh in runtime.exs to use these
   SMTP_HOST: "mailhog"
   SMTP_PORT: "1025"
