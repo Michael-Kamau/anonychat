@@ -13,7 +13,7 @@ config :anonychat,
 
 # Configures the endpoint
 config :anonychat, AnonychatWeb.Endpoint,
-  url: [host: "localhost"],
+  url: [host: "rancher.mikazon.co.ke"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: AnonychatWeb.ErrorHTML, json: AnonychatWeb.ErrorJSON],
