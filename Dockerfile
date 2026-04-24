@@ -9,7 +9,7 @@ FROM node:22-alpine AS node
 ###############################
 # Stage 1: Elixir build       #
 ###############################
-FROM elixir:1.15-alpine AS build
+FROM elixir:1.17-otp-26-alpine AS build
 
 ENV MIX_ENV=prod \
     LANG=C.UTF-8
