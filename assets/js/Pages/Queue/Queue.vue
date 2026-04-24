@@ -116,8 +116,17 @@ const form = useForm({
   message: ''
 })
 
+const csrfToken = document
+  .querySelector("meta[name='csrf-token']")
+  ?.getAttribute('content')
+
 const submitMessage = () => {
   form.post('/queue', {
+    headers: csrfToken
+      ? {
+          'x-csrf-token': csrfToken
+        }
+      : {},
     preserveScroll: true,
     onSuccess: () => {
       form.reset('message')
