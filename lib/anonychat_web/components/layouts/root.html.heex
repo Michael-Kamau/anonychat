@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta name="csrf-token" content={get_csrf_token()} />
     <.inertia_title><%= assigns[:page_title] || "Anonychat" %></.inertia_title>
     <.inertia_head content={assigns[:inertia_head]} />
     <% env = Application.get_env(:anonychat, :env, :prod) %>
