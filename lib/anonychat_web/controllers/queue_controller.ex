@@ -20,7 +20,12 @@ defmodule AnonychatWeb.QueueController do
         |> redirect(to: ~p"/queue")
 
       _ ->
-        IO.inspect("Sending message to queue.")
+
+        AnonychatWeb.Endpoint.broadcast(
+        "amqp:user_messages",
+        "new_message",
+        %{body: message, created_at: DateTime.utc_now() |> DateTime.to_iso8601()}
+      )
 
         conn
         |> put_flash(:success, "Message sent to queue successfully!")

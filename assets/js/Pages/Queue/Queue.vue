@@ -2,10 +2,10 @@
   <div class="min-h-screen bg-gray-50 text-gray-900">
     <!-- Header -->
     <header class="bg-white shadow-sm">
-      <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <h1 class="text-xl font-bold text-emerald-600">
-          Phoenix/Inertia
-        </h1>
+      <nav
+        class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4"
+      >
+        <h1 class="text-xl font-bold text-emerald-600">Phoenix/Inertia</h1>
 
         <div class="space-x-6 text-sm font-medium">
           <Link href="/" class="text-gray-700 hover:text-emerald-600">
@@ -16,7 +16,7 @@
             About
           </Link>
 
-          <Link href="/queue" class="text-emerald-600 font-semibold">
+          <Link href="/queue" class="font-semibold text-emerald-600">
             Queue
           </Link>
         </div>
@@ -24,17 +24,16 @@
     </header>
 
     <!-- Main Content -->
-    <main class="mx-auto max-w-4xl px-6 py-12">
+    <main class="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-2">
+      <!-- Form Section -->
       <section class="rounded-xl bg-white p-6 shadow-sm">
-        <h2 class="text-2xl font-bold">
-          Send Message to Queue
-        </h2>
+        <h2 class="text-2xl font-bold">Send Message to Queue</h2>
 
         <p class="mt-2 text-sm text-gray-600">
-          Add a message below. It will be sent to RabbitMQ and consumed by the worker.
+          Add a message below. It will be sent to RabbitMQ and consumed by the
+          worker.
         </p>
 
-        <!-- Form -->
         <form @submit.prevent="submitMessage" class="mt-6 space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700">
@@ -58,38 +57,36 @@
             :disabled="form.processing"
             class="rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            {{ form.processing ? 'Sending...' : 'Send to Queue' }}
+            {{ form.processing ? "Sending..." : "Send to Queue" }}
           </button>
         </form>
       </section>
 
-      <!-- Consumed Messages -->
-      <section class="mt-8 rounded-xl bg-white p-6 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h2 class="text-2xl font-bold">
-            Consumed Messages
-          </h2>
+      <!-- Consumed Messages Section -->
+      <section class="rounded-xl bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-2xl font-bold">Consumed Messages</h2>
 
-          <button
-            @click="refreshMessages"
-            class="text-sm font-medium text-emerald-600 hover:text-emerald-700"
-          >
-            Refresh
-          </button>
+          <h2 class="text-sm font-light text-emerald-600 capitalize">
+            {{ status }}
+          </h2>
         </div>
 
-        <div v-if="messages.length === 0" class="mt-6 rounded-lg bg-gray-100 p-4 text-sm text-gray-600">
+        <div
+          v-if="messages.length === 0"
+          class="mt-6 rounded-lg bg-gray-100 p-4 text-sm text-gray-600"
+        >
           No consumed messages yet.
         </div>
 
-        <ul v-else class="mt-6 space-y-3">
+        <ul v-else class="mt-6 max-h-[420px] space-y-3 overflow-y-auto pr-2">
           <li
             v-for="message in messages"
             :key="message.id"
             class="rounded-lg border border-gray-200 p-4"
           >
             <p class="text-gray-800">
-              {{ message.message }}
+              {{ message.body }}
             </p>
 
             <p class="mt-2 text-xs text-gray-500">
@@ -103,45 +100,64 @@
 </template>
 
 <script setup>
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { ref } from "vue";
+import { Link, router, useForm } from "@inertiajs/vue3";
+import socket from '../../socket.js'
+
 
 const props = defineProps({
   messages: {
     type: Array,
-    default: () => []
-  }
-})
+    default: () => [],
+  },
+});
+
+const status = ref('joining') // 'joining' | 'joined' | 'error'
+const messages = ref([])
+
+const channel = socket.channel("amqp:user_messages", {});
+
+channel
+  .join()
+  .receive("ok", () => {
+    status.value = "joined";
+  })
+  .receive("error", (reason) => {
+    status.value = "error";
+    console.error("Failed to join", reason);
+  });
+
+// Incoming messages
+channel.on("new_message", (payload) => {
+  console.log("Received message from channel:", payload);
+  messages.value.push({ ...payload, _ts: new Date() });
+});
 
 const form = useForm({
-  message: ''
-})
+  message: "",
+});
 
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
-  ?.getAttribute('content')
+  ?.getAttribute("content");
 
 const submitMessage = () => {
-  form.post('/queue', {
+  form.post("/queue", {
     headers: csrfToken
       ? {
-          'x-csrf-token': csrfToken
+          "x-csrf-token": csrfToken,
         }
       : {},
     preserveScroll: true,
     onSuccess: () => {
-      form.reset('message')
+      form.reset("message");
 
       router.reload({
-        only: ['messages']
-      })
-    }
-  })
-}
+        only: ["messages"],
+      });
+    },
+  });
+};
 
-const refreshMessages = () => {
-  router.reload({
-    only: ['messages'],
-    preserveScroll: true
-  })
-}
+
 </script>
