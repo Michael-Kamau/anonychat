@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <.inertia_title><%= assigns[:page_title] || "Anonychat" %></.inertia_title>
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.inertia_title>{assigns[:page_title] || "Anonychat"}</.inertia_title>
     <.inertia_head content={assigns[:inertia_head]} />
     <% env = Application.get_env(:anonychat, :env, :prod) %>
-
-    <!-- Remove old app.css/app.js lines while on Vite -->
-    <%=if env == :dev do %>
-      <script type="module" src="http://localhost:5173/@vite/client"></script>
-      <script type="module" src="http://localhost:5173/js/app.js"></script>
+    
+<!-- Remove old app.css/app.js lines while on Vite -->
+    <%= if env == :dev do %>
+      <script type="module" src="http://localhost:5173/@vite/client">
+      </script>
+      <script type="module" src="http://localhost:5173/js/app.js">
+      </script>
     <% else %>
-          <!-- In prod: just load your compiled assets -->
-          <link rel="stylesheet" href={~p"/assets/app.css"} />
-          <script type="module" src={~p"/assets/app.js"}></script>
+      <!-- In prod: just load your compiled assets -->
+      <link rel="stylesheet" href={~p"/assets/app.css"} />
+      <script type="module" src={~p"/assets/app.js"}>
+      </script>
     <% end %>
   </head>
   <body>
-    <%= @inner_content %>
+    {@inner_content}
   </body>
 </html>

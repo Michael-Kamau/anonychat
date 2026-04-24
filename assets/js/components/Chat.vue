@@ -88,6 +88,7 @@ export default {
 
     // Join the channel
     const channel = socket.channel('room:lobby', {})
+    
     channel.join()
       .receive('ok', () => { status.value = 'joined' })
       .receive('error', (reason) => { status.value = 'error'; console.error('Failed to join', reason) })

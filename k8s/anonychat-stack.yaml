@@ -21,7 +21,7 @@ kind: ConfigMap
 metadata:
   name: anonychat-config
 data:
-  PORT: "31314"
+  PORT: "4000"
   MIX_ENV: "prod"
   PHX_SERVER: "true"
   PHX_HOST: "rancher.mikazon.co.ke"

@@ -5,7 +5,7 @@ defmodule Anonychat.MixProject do
     [
       app: :anonychat,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -66,7 +66,8 @@ defmodule Anonychat.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:inertia, "~> 2.5"}
+      {:inertia, "~> 2.5"},
+      {:amqp, "~> 4.1.0"}
     ]
   end
 

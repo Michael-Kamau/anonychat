@@ -21,6 +21,9 @@ defmodule AnonychatWeb.Router do
 
     get "/", PageController, :home
     get "/about", PageController, :about
+    get "/queue", QueueController, :index
+    post "/queue", QueueController, :create_message
+
 
   end
 
