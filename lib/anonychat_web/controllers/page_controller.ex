@@ -6,7 +6,7 @@ defmodule AnonychatWeb.PageController do
   # end
 
   def home(conn, _params) do
-    :timer.sleep(1000)
+    # :timer.sleep(1000)
     conn
     |> assign_prop(:name, "Phoenix + Inertia + Vues 🚀")
     |> render_inertia("Home")    # "Home" will resolve to assets/js/pages/Home.vue
