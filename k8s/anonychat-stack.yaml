@@ -11,6 +11,8 @@ stringData:
   SECRET_KEY_BASE: "bmRCNUCmSLpJJSZl+vSydbgNqFm6TbYfmLQ9B3wVtnsUiNMIx2T5+VBFW93pk9HC"
   # Match Postgres user/pass/db + service name below
   DATABASE_URL: "ecto://postgres:postgres@anonychat-postgres:5432/anonychat_prod"
+  # RabbitMQ connection URL for your app
+  RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
 
 ---
 # =========================
@@ -28,6 +30,9 @@ data:
   # Mailhog – configure Swoosh in runtime.exs to use these
   SMTP_HOST: "mailhog"
   SMTP_PORT: "1025"
+   # RabbitMQ service connection details
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
 
 ---
 # =========================
@@ -40,7 +45,7 @@ metadata:
   labels:
     app: anonychat
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: anonychat
@@ -63,8 +68,8 @@ spec:
               done
       containers:
         - name: anonychat
-          image: mkaritu/anonychat:v4
-          imagePullPolicy: IfNotPresent
+          image: mkaritu/anonychat:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4000
           envFrom:
@@ -136,7 +141,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 5Gi
   # storageClassName: standard  # uncomment if you need a specific storage class
 
 ---
@@ -276,4 +281,103 @@ spec:
     - name: http
       port: 8025
       targetPort: 8025
+  type: ClusterIP
+
+
+---
+# =========================
+# Deployment: Persistent Volume Claim for RabbitMQ
+# =========================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# =========================
+# Deployment: RabbitMQ
+# =========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          ports:
+            - name: amqp
+              containerPort: 5672
+            - name: management
+              containerPort: 15672
+          envFrom:
+            - secretRef:
+                name: rabbitmq-secret
+          readinessProbe:
+            exec:
+              command:
+                - rabbitmq-diagnostics
+                - check_running
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - rabbitmq-diagnostics
+                - status
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      volumes:
+        - name: rabbitmq-data
+          persistentVolumeClaim:
+            claimName: rabbitmq-pvc
+---
+# =========================
+# Service: RabbitMQ
+# =========================
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
   type: ClusterIP
