@@ -15,7 +15,10 @@ defmodule Anonychat.Application do
       # Start a worker by calling: Anonychat.Worker.start_link(arg)
       # {Anonychat.Worker, arg},
       # Start to serve requests, typically the last entry
-      AnonychatWeb.Endpoint
+      AnonychatWeb.Endpoint,
+
+      # AMQP consumer worker
+      Anonychat.Amqp.AmqpConsumer
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

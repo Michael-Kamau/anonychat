@@ -1,5 +1,6 @@
 defmodule AnonychatWeb.QueueController do
   use AnonychatWeb, :controller
+  alias Anonychat.Amqp.AmqpPublisher
 
   def index(conn, _params) do
     conn
@@ -21,11 +22,13 @@ defmodule AnonychatWeb.QueueController do
 
       _ ->
 
-        AnonychatWeb.Endpoint.broadcast(
-        "amqp:user_messages",
-        "new_message",
-        %{body: message, created_at: DateTime.utc_now() |> DateTime.to_iso8601()}
-      )
+        AmqpPublisher.publish(message)
+
+      #   AnonychatWeb.Endpoint.broadcast(
+      #   "amqp:user_messages",
+      #   "new_message",
+      #   %{body: message, created_at: DateTime.utc_now() |> DateTime.to_iso8601()}
+      # )
 
         conn
         |> put_flash(:success, "Message sent to queue successfully!")

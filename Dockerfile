@@ -43,7 +43,7 @@ RUN mix deps.get --only $MIX_ENV && \
 # Install JS deps for Vite/Vue/Inertia
 COPY assets/package*.json assets/
 WORKDIR /app/assets
-RUN npm install
+RUN npm ci
 
 WORKDIR /app
 
@@ -76,6 +76,7 @@ ENV LANG=C.UTF-8 \
     PHX_SERVER=true
 
 RUN apk add --no-cache \
+  ca-certificates \
   openssl \
   ncurses-libs \
   libstdc++
@@ -84,6 +85,12 @@ WORKDIR /app
 
 COPY --from=build /app/_build/prod/rel/anonychat ./
 
+RUN addgroup -S anonychat && \
+    adduser -S -G anonychat anonychat && \
+    chown -R anonychat:anonychat /app
+
 EXPOSE 4000
+
+USER anonychat
 
 CMD ["bin/anonychat", "start"]

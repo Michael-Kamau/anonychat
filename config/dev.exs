@@ -96,3 +96,7 @@ config :swoosh, :api_client, false
 
 config :anonychat, :env, :dev
 
+config :anonychat, :amqp,
+  connections: [
+    chat_conn: [url: "amqp://guest:guest@localhost:5672"],
+  ]

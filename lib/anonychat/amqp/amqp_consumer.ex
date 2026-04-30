@@ -2,7 +2,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
   use GenServer
   use AMQP
 
-  def start_link do
+  def start_link(_opts \\ []) do
     GenServer.start_link(__MODULE__, [], [])
   end
 
@@ -23,17 +23,17 @@ defmodule Anonychat.Amqp.AmqpConsumer do
   end
 
   # Confirmation sent by the broker after registering this process as a consumer
-  def handle_info({:basic_consume_ok, %{consumer_tag: consumer_tag}}, chan) do
+  def handle_info({:basic_consume_ok, %{consumer_tag: _consumer_tag}}, chan) do
     {:noreply, chan}
   end
 
   # Sent by the broker when the consumer is unexpectedly cancelled (such as after a queue deletion)
-  def handle_info({:basic_cancel, %{consumer_tag: consumer_tag}}, chan) do
+  def handle_info({:basic_cancel, %{consumer_tag: _consumer_tag}}, chan) do
     {:stop, :normal, chan}
   end
 
   # Confirmation sent by the broker to the consumer process after a Basic.cancel
-  def handle_info({:basic_cancel_ok, %{consumer_tag: consumer_tag}}, chan) do
+  def handle_info({:basic_cancel_ok, %{consumer_tag: _consumer_tag}}, chan) do
     {:noreply, chan}
   end
 
@@ -58,13 +58,18 @@ defmodule Anonychat.Amqp.AmqpConsumer do
   end
 
   defp consume(channel, tag, redelivered, payload) do
-    number = String.to_integer(payload)
-    if number <= 10 do
+    binary_string = payload |> to_string() |> String.trim()
+    if is_binary(binary_string) do
       :ok = Basic.ack channel, tag
-      IO.puts "Consumed a #{number}."
+
+        AnonychatWeb.Endpoint.broadcast(
+        "amqp:user_messages",
+        "new_message",
+        %{body: binary_string, created_at: DateTime.utc_now() |> DateTime.to_iso8601()}
+      )
     else
       :ok = Basic.reject channel, tag, requeue: false
-      IO.puts "#{number} is too big and was rejected."
+      IO.puts "#{binary_string} is not a valid binary string and was rejected."
     end
 
   rescue
@@ -75,7 +80,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
     # You might also want to catch :exit signal in production code.
     # Make sure you call ack, nack or reject otherwise consumer will stop
     # receiving messages.
-    exception ->
+    _exception ->
       :ok = Basic.reject channel, tag, requeue: not redelivered
       IO.puts "Error converting #{payload} to integer"
   end
