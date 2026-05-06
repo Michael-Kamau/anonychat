@@ -26,7 +26,7 @@ data:
   PORT: "4000"
   MIX_ENV: "prod"
   PHX_SERVER: "true"
-  PHX_HOST: "rancher.mikazon.co.ke"
+  PHX_HOST: "localhost" # adjust if you have a domain or external IP
   # Mailhog – configure Swoosh in runtime.exs to use these
   SMTP_HOST: "mailhog"
   SMTP_PORT: "1025"
@@ -283,6 +283,15 @@ spec:
       targetPort: 8025
   type: ClusterIP
 
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-secret
+type: Opaque
+stringData:
+  RABBITMQ_DEFAULT_USER: "guest"
+  RABBITMQ_DEFAULT_PASS: "guest"
 
 ---
 # =========================
