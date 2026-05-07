@@ -5,20 +5,18 @@ defmodule Anonychat.Amqp.AmqpPublisher do
 
   alias AMQP.{Basic, Channel, Connection}
 
-  @connection_url "amqp://guest:guest@localhost"
   @exchange "gen_server_test_exchange"
   @routing_key ""
 
   @doc """
   Publish a message to the same exchange consumed by `AmqpConsumer`.
   """
-  @spec publish(binary()) :: :ok | {:error, term()}
   def publish(payload) when is_binary(payload) do
-    do_publish_with_connection(@connection_url, @exchange, @routing_key, payload)
+    do_publish_with_connection(amqp_connection_config(), @exchange, @routing_key, payload)
   end
 
-  defp do_publish_with_connection(url, exchange, routing_key, payload) do
-    with {:ok, conn} <- Connection.open(url) do
+  defp do_publish_with_connection(connection_config, exchange, routing_key, payload) do
+    with {:ok, conn} <- Connection.open(connection_config) do
       try do
         with {:ok, chan} <- Channel.open(conn) do
           try do
@@ -30,6 +28,20 @@ defmodule Anonychat.Amqp.AmqpPublisher do
       after
         close_if_open(conn)
       end
+    end
+  end
+
+  defp amqp_connection_config do
+    amqp_config = Application.fetch_env!(:anonychat, :amqp)
+    connections = Keyword.get(amqp_config, :connections, [])
+    [queue_chat | _] = connections
+
+    case queue_chat do
+      %{host: _, port: _, username: _, password: _} = conn ->
+        Enum.into(conn, [])
+
+      {:chat_conn, conn} when is_list(conn) ->
+        conn
     end
   end
 

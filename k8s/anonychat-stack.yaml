@@ -30,9 +30,6 @@ data:
   # Mailhog – configure Swoosh in runtime.exs to use these
   SMTP_HOST: "mailhog"
   SMTP_PORT: "1025"
-   # RabbitMQ service connection details
-  RABBITMQ_HOST: "rabbitmq"
-  RABBITMQ_PORT: "5672"
 
 ---
 # =========================

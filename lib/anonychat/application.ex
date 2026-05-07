@@ -18,7 +18,7 @@ defmodule Anonychat.Application do
       AnonychatWeb.Endpoint,
 
       # AMQP consumer worker
-      # Anonychat.Amqp.AmqpConsumer
+      Anonychat.Amqp.AmqpConsumer
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

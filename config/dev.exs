@@ -33,7 +33,7 @@ config :anonychat, AnonychatWeb.Endpoint,
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:anonychat, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:anonychat, ~w(--watch)]},
-     node: ["node_modules/vite/bin/vite.js", cd: Path.expand("../assets", __DIR__)]
+    node: ["node_modules/vite/bin/vite.js", cd: Path.expand("../assets", __DIR__)]
   ]
 
 # ## SSL Support
@@ -98,5 +98,5 @@ config :anonychat, :env, :dev
 
 config :anonychat, :amqp,
   connections: [
-    chat_conn: [url: "amqp://guest:guest@localhost:5672"],
+    chat_conn: [url: "amqp://guest:guest@localhost:5672"]
   ]

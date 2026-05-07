@@ -94,7 +94,6 @@ defmodule AnonychatWeb do
 
       import Inertia.HTML
 
-
       # Routes generation with the ~p sigil
       unquote(verified_routes())
     end

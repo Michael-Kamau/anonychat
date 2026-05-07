@@ -11,7 +11,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
   @queue_error "#{@queue}_error"
 
   def init(_opts) do
-    {:ok, conn} = Connection.open("amqp://guest:guest@localhost")
+    {:ok, conn} = Connection.open(amqp_connection_config())
     {:ok, chan} = Channel.open(conn)
     setup_queue(chan)
 
@@ -20,6 +20,20 @@ defmodule Anonychat.Amqp.AmqpConsumer do
     # Register the GenServer process as a consumer
     {:ok, _consumer_tag} = Basic.consume(chan, @queue)
     {:ok, chan}
+  end
+
+  defp amqp_connection_config do
+    amqp_config = Application.fetch_env!(:anonychat, :amqp)
+    connections = Keyword.get(amqp_config, :connections, [])
+    [queue_chat | _] = connections
+
+    case queue_chat do
+      %{host: _, port: _, username: _, password: _} = conn ->
+        Enum.into(conn, [])
+
+      {:chat_conn, conn} when is_list(conn) ->
+        conn
+    end
   end
 
   # Confirmation sent by the broker after registering this process as a consumer
