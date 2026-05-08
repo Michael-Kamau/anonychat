@@ -47,7 +47,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
     connections = Keyword.get(amqp_config, :connections, [])
     [queue_chat | _] = connections
 
-    Logger.debug("AMQP connection config: #{inspect(queue_chat)}")
+    Logger.warning("AMQP connection config: #{inspect(queue_chat)}")
 
     case queue_chat do
       %{host: _, port: _, username: _, password: _} = conn ->
