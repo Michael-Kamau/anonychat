@@ -4,7 +4,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
 
   require Logger
 
-  @retry_interval 5_000
+  @retry_interval 10_000
 
   def start_link(_opts \\ []) do
     GenServer.start_link(__MODULE__, [], [])
@@ -15,7 +15,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
   @queue_error "#{@queue}_error"
 
   def init(_opts) do
-    {:ok, %{channel: nil}, {:continue, :connect}}
+    {:ok, %{channel: nil, failures: 0}, {:continue, :connect}}
   end
 
   def handle_continue(:connect, state) do
@@ -36,9 +36,9 @@ defmodule Anonychat.Amqp.AmqpConsumer do
       {:noreply, %{state | channel: chan}}
     else
       {:error, reason} ->
-        Logger.warning("AMQP consumer connection failed: #{inspect(reason)}")
+        log_connection_failure(state.failures, reason)
         schedule_reconnect()
-        {:noreply, %{state | channel: nil}}
+        {:noreply, %{state | channel: nil, failures: state.failures + 1}}
     end
   end
 
@@ -111,9 +111,8 @@ defmodule Anonychat.Amqp.AmqpConsumer do
       )
     else
       :ok = Basic.reject(channel, tag, requeue: false)
-      IO.puts "#{binary_string} is not a valid binary string and was rejected."
+      IO.puts("#{binary_string} is not a valid binary string and was rejected.")
     end
-
   rescue
     # Requeue unless it's a redelivered message.
     # This means we will retry consuming a message once in case of exception
@@ -124,10 +123,22 @@ defmodule Anonychat.Amqp.AmqpConsumer do
     # receiving messages.
     _exception ->
       :ok = Basic.reject(channel, tag, requeue: not redelivered)
-      IO.puts "Error converting #{payload} to integer"
+      IO.puts("Error converting #{payload} to integer")
   end
 
   defp schedule_reconnect do
     Process.send_after(self(), :connect, @retry_interval)
+  end
+
+  defp log_connection_failure(0, reason) do
+    Logger.warning("AMQP consumer connection failed: #{inspect(reason)}")
+  end
+
+  defp log_connection_failure(failures, reason) when rem(failures, 6) == 0 do
+    Logger.warning("AMQP consumer still waiting for RabbitMQ: #{inspect(reason)}")
+  end
+
+  defp log_connection_failure(_failures, reason) do
+    Logger.debug("AMQP consumer connection failed: #{inspect(reason)}")
   end
 end
