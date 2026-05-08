@@ -37,8 +37,14 @@ defmodule Anonychat.Amqp.AmqpPublisher do
     [queue_chat | _] = connections
 
     case queue_chat do
+      %{url: url} when is_binary(url) ->
+        url
+
       %{host: _, port: _, username: _, password: _} = conn ->
         Enum.into(conn, [])
+
+      {:chat_conn, [url: url]} when is_binary(url) ->
+        url
 
       {:chat_conn, conn} when is_list(conn) ->
         conn

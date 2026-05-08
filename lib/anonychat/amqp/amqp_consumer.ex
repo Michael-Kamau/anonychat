@@ -22,10 +22,6 @@ defmodule Anonychat.Amqp.AmqpConsumer do
     connect(state)
   end
 
-  def handle_info(:connect, state) do
-    connect(state)
-  end
-
   defp connect(state) do
     with {:ok, conn} <- Connection.open(amqp_connection_config()),
          {:ok, chan} <- Channel.open(conn),
@@ -47,11 +43,15 @@ defmodule Anonychat.Amqp.AmqpConsumer do
     connections = Keyword.get(amqp_config, :connections, [])
     [queue_chat | _] = connections
 
-    Logger.warning("AMQP connection config: #{inspect(queue_chat)}")
-
     case queue_chat do
+      %{url: url} when is_binary(url) ->
+        url
+
       %{host: _, port: _, username: _, password: _} = conn ->
         Enum.into(conn, [])
+
+      {:chat_conn, [url: url]} when is_binary(url) ->
+        url
 
       {:chat_conn, conn} when is_list(conn) ->
         conn
@@ -59,6 +59,10 @@ defmodule Anonychat.Amqp.AmqpConsumer do
   end
 
   # Confirmation sent by the broker after registering this process as a consumer
+  def handle_info(:connect, state) do
+    connect(state)
+  end
+
   def handle_info({:basic_consume_ok, %{consumer_tag: _consumer_tag}}, state) do
     {:noreply, state}
   end
