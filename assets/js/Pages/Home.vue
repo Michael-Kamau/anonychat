@@ -32,7 +32,7 @@
       </p>
 
       <h2 class="mt-4 text-4xl font-bold tracking-tight">
-        Simple RabbitMQ Queue Project
+        Simple RabbitMQ/Sockets Queue Project
       </h2>
 
       <p class="mx-auto mt-4 max-w-2xl text-lg leading-8 text-gray-600">
