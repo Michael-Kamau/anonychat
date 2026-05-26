@@ -4,7 +4,7 @@
     <header class="bg-white shadow-sm">
       <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <h1 class="text-xl font-bold text-emerald-600">
-          Phoenix/Inertia
+          Phoenix/Inertia Project
         </h1>
 
         <div class="space-x-6 text-sm font-medium">
