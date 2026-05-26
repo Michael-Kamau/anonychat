@@ -28,7 +28,7 @@
 
     <main class="mx-auto max-w-6xl px-6 py-20 text-center">
       <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">
-        Phoenix + Inertia + RabbitMQ
+        Phoenix + Inertia + RabbitMQ broker
       </p>
 
       <h2 class="mt-4 text-4xl font-bold tracking-tight">
