@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: anonychat-ingress
+  namespace: anonychat
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - anonychat.mikazon.co.ke
+      secretName: anonychat-mikazon-tls
+  rules:
+    - host: anonychat.mikazon.co.ke
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: anonychat
+                port:
+                  number: 80
