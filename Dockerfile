@@ -1,9 +1,7 @@
 ###############################
 # Stage 0: Node 22 provider   #
 ###############################
-FROM node:22-alpine AS node
-
-# We don't need to do anything here; we'll just copy node + npm out of it
+FROM node:22-alpine3.20 AS node
 
 
 ###############################
@@ -14,15 +12,20 @@ FROM elixir:1.17-otp-26-alpine AS build
 ENV MIX_ENV=prod \
     LANG=C.UTF-8
 
-# System deps (no nodejs from apk!)
+# System deps
 RUN apk add --no-cache \
   build-base \
   git \
-  curl
+  curl \
+  openssl \
+  ncurses-libs \
+  libstdc++ \
+  libgcc
 
-# Copy Node 22 + npm from the node:22-alpine image
+# Copy Node 22 + npm from the node image
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+
 # Make npm available on PATH
 RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
 
@@ -32,7 +35,7 @@ WORKDIR /app
 RUN mix local.hex --force && \
     mix local.rebar --force
 
-# Copy mix + config
+# Copy mix + config first for better Docker caching
 COPY mix.exs mix.lock ./
 COPY config config
 
@@ -42,23 +45,20 @@ RUN mix deps.get --only $MIX_ENV && \
 
 # Install JS deps for Vite/Vue/Inertia
 COPY assets/package*.json assets/
+
 WORKDIR /app/assets
+
 RUN npm ci
 
 WORKDIR /app
 
-# Install esbuild/tailwind binaries (you still need tailwind)
+# Install esbuild/tailwind binaries if your Phoenix aliases need them
 RUN mix assets.setup
 
 # Copy the rest of the project
 COPY . .
 
-# IMPORTANT: your aliases should now have *no esbuild* in assets.deploy:
-# "assets.deploy": [
-#   "tailwind anonychat --minify",
-#   "cmd --cd assets node node_modules/vite/bin/vite.js build",
-#   "phx.digest"
-# ]
+# Build frontend assets
 RUN mix assets.deploy
 
 # Build the release
@@ -79,7 +79,8 @@ RUN apk add --no-cache \
   ca-certificates \
   openssl \
   ncurses-libs \
-  libstdc++
+  libstdc++ \
+  libgcc
 
 WORKDIR /app
 
