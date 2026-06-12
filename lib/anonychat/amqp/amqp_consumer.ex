@@ -15,7 +15,9 @@ defmodule Anonychat.Amqp.AmqpConsumer do
   @queue_error "#{@queue}_error"
 
   def init(_opts) do
-    {:ok, %{channel: nil}, {:continue, :connect}}
+    Process.flag(:trap_exit, true)
+    {:ok, %{conn: nil, channel: nil, conn_ref: nil, chan_ref: nil, reconnecting?: false},
+     {:continue, :connect}}
   end
 
   def handle_continue(:connect, state) do
@@ -29,12 +31,18 @@ defmodule Anonychat.Amqp.AmqpConsumer do
          :ok <- Basic.qos(chan, prefetch_count: 10),
          {:ok, _consumer_tag} <- Basic.consume(chan, @queue) do
       Logger.info("AMQP consumer connected")
-      {:noreply, %{state | channel: chan}}
+
+      conn_ref = Process.monitor(conn.pid)
+      chan_ref = Process.monitor(chan.pid)
+
+      {:noreply,
+       %{state | channel: chan, conn_ref: conn_ref, chan_ref: chan_ref, reconnecting?: false}}
     else
       {:error, reason} ->
         Logger.warning("AMQP consumer connection failed: #{inspect(reason)}")
-        schedule_reconnect()
-        {:noreply, %{state | channel: nil}}
+        Logger.warning("AMQP consumer connection failed: #{inspect(state)}")
+
+        {:noreply, schedule_reconnect(%{state | conn: nil, channel: nil})}
     end
   end
 
@@ -60,7 +68,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
 
   # Confirmation sent by the broker after registering this process as a consumer
   def handle_info(:connect, state) do
-    connect(state)
+    connect(%{state | reconnecting?: false})
   end
 
   def handle_info({:basic_consume_ok, %{consumer_tag: _consumer_tag}}, state) do
@@ -69,8 +77,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
 
   # Sent by the broker when the consumer is unexpectedly cancelled (such as after a queue deletion)
   def handle_info({:basic_cancel, %{consumer_tag: _consumer_tag}}, state) do
-    schedule_reconnect()
-    {:noreply, %{state | channel: nil}}
+    {:noreply, schedule_reconnect(%{state | conn: nil, channel: nil, reconnecting?: true})}
   end
 
   # Confirmation sent by the broker to the consumer process after a Basic.cancel
@@ -85,6 +92,25 @@ defmodule Anonychat.Amqp.AmqpConsumer do
     # You might want to run payload consumption in separate Tasks in production
     consume(chan, tag, redelivered, payload)
     {:noreply, state}
+  end
+
+  def handle_info({:DOWN, ref, :process, _pid, reason}, state)
+      when ref in [state.conn_ref, state.chan_ref] do
+    Logger.warning("AMQP connection/channel went down: #{inspect(reason)}")
+
+    {:noreply,
+     state
+     |> cleanup_connection()
+     |> schedule_reconnect()}
+  end
+
+  def handle_info({:EXIT, _pid, reason}, state) do
+    Logger.warning("AMQP linked process exited: #{inspect(reason)}")
+
+    {:noreply,
+     state
+     |> cleanup_connection()
+     |> schedule_reconnect()}
   end
 
   defp setup_queue(chan) do
@@ -132,7 +158,24 @@ defmodule Anonychat.Amqp.AmqpConsumer do
       IO.puts("Error converting #{payload} to integer")
   end
 
-  defp schedule_reconnect do
+  defp schedule_reconnect(%{reconnecting?: true} = state), do: state
+
+  defp schedule_reconnect(state) do
     Process.send_after(self(), :connect, @retry_interval)
+    %{state | reconnecting?: true}
+  end
+
+  defp cleanup_connection(state) do
+    cleanup_monitors(state)
+
+    %{state | conn: nil, channel: nil, conn_ref: nil, chan_ref: nil}
+  end
+
+  defp cleanup_monitors(%{conn_ref: conn_ref, chan_ref: chan_ref}) do
+    for ref <- [conn_ref, chan_ref], is_reference(ref) do
+      Process.demonitor(ref, [:flush])
+    end
+
+    :ok
   end
 end
