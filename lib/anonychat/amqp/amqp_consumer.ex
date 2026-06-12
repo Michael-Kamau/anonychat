@@ -16,6 +16,7 @@ defmodule Anonychat.Amqp.AmqpConsumer do
 
   def init(_opts) do
     Process.flag(:trap_exit, true)
+
     {:ok, %{conn: nil, channel: nil, conn_ref: nil, chan_ref: nil, reconnecting?: false},
      {:continue, :connect}}
   end
