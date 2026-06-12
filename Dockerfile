@@ -68,7 +68,7 @@ RUN mix release
 ###############################
 # Stage 2: Runtime image      #
 ###############################
-FROM alpine:3.18 AS app
+FROM alpine:3.20 AS app
 
 ENV LANG=C.UTF-8 \
     MIX_ENV=prod \
