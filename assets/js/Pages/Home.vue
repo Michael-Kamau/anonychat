@@ -1,32 +1,5 @@
 <template>
   <div class="min-h-screen bg-gray-50 text-gray-900">
-    <header class="border-b border-gray-100 bg-white/95 shadow-sm">
-      <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <h1 class="text-xl font-bold text-emerald-600">
-          Anonychat
-        </h1>
-
-        <div class="space-x-6 text-sm font-medium">
-          <Link href="/" class="font-semibold text-emerald-600">
-            Home
-          </Link>
-          <Link
-            href="/about"
-            class="text-gray-700 transition hover:text-emerald-600"
-          >
-            Chat
-          </Link>
-          <Link
-            href="/queue"
-            class="text-gray-700 transition hover:text-emerald-600"
-          >
-            Queue
-          </Link>
-        </div>
-      </nav>
-    </header>
-
-    <main class="mx-auto max-w-6xl px-6 py-20 text-center">
       <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">
         Phoenix + Inertia + RabbitMQ broker
       </p>
@@ -78,12 +51,15 @@
           </p>
         </div>
       </div>
-    </main>
   </div>
 </template>
 
 <script setup>
+import AppLayout from '../Layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3'
+
+defineOptions({ layout: AppLayout })
+
 
 defineProps({
   name: String

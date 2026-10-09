@@ -1,30 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 text-gray-900">
-    <!-- Header -->
-    <header class="bg-white shadow-sm">
-      <nav
-        class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4"
-      >
-        <h1 class="text-xl font-bold text-emerald-600">Phoenix/Inertia</h1>
-
-        <div class="space-x-6 text-sm font-medium">
-          <Link href="/" class="text-gray-700 hover:text-emerald-600">
-            Home
-          </Link>
-
-          <Link href="/about" class="text-gray-700 hover:text-emerald-600">
-            About
-          </Link>
-
-          <Link href="/queue" class="font-semibold text-emerald-600">
-            Queue
-          </Link>
-        </div>
-      </nav>
-    </header>
-
     <!-- Main Content -->
-    <main class="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-2">
+    <main class="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 pb-12 md:grid-cols-2">
       <!-- Form Section -->
       <section class="rounded-xl bg-white p-6 shadow-sm">
         <h2 class="text-2xl font-bold">Send Message to Queue</h2>
@@ -96,14 +72,16 @@
         </ul>
       </section>
     </main>
-  </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import socket from '../../socket.js'
+import AppLayout from '../../Layouts/AppLayout.vue';
 
+
+defineOptions({ layout: AppLayout })
 
 const props = defineProps({
   messages: {
